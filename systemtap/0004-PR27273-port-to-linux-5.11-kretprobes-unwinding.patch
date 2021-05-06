@@ -1,0 +1,26 @@
+From 53358e75a4dba7d18d86aa112debde67ba56466d Mon Sep 17 00:00:00 2001
+From: "Frank Ch. Eigler" <fche@redhat.com>
+Date: Fri, 29 Jan 2021 20:54:42 +0000
+Subject: [PATCH 4/6] PR27273: port to linux 5.11, kretprobes - unwinding
+
+Missed one.
+---
+ runtime/linux/regs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/runtime/linux/regs.c b/runtime/linux/regs.c
+index 5bcd1031c..26423164b 100644
+--- a/runtime/linux/regs.c
++++ b/runtime/linux/regs.c
+@@ -36,7 +36,7 @@
+  * @param ri Pointer to the struct kretprobe_instance.
+  * @return The function's address
+  */
+-#define _stp_probe_addr_r(ri) (ri->rp->kp.addr)
++#define _stp_probe_addr_r(ri) (get_kretprobe(ri)->kp.addr)
+ 
+ #if defined  (__x86_64__)
+ 
+-- 
+2.31.1
+

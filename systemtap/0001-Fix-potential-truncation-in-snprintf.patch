@@ -1,0 +1,25 @@
+From a2710de711f3a6181e453e840456e925ee2fe6a5 Mon Sep 17 00:00:00 2001
+From: Christian Pellegrin <chri@evolware.org>
+Date: Sun, 25 Apr 2021 19:43:12 +0100
+Subject: [PATCH 1/6] Fix potential truncation in snprintf.
+
+---
+ staprun/staprun.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/staprun/staprun.c b/staprun/staprun.c
+index 334804b29..9f3e9da93 100644
+--- a/staprun/staprun.c
++++ b/staprun/staprun.c
+@@ -530,7 +530,7 @@ int main(int argc, char **argv)
+ #ifdef HAVE_OPENAT
+         if (relay_basedir_fd >= 0) {
+                 char ** new_argv = calloc(sizeof(char *),argc+2);
+-                const int new_Foption_size = 10; /* -FNNNNN */
++                const int new_Foption_size = 15; /* -FNNNNN */
+                 char * new_Foption = malloc(new_Foption_size);
+                 int i;
+ 
+-- 
+2.31.1
+
