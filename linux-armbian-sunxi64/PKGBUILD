@@ -1,0 +1,109 @@
+# Repack Armbian sunxi64 kernel
+
+buildarch=8
+
+pkgbase=linux-armbian-sunxi64
+_desc="Armbian sunxi64"
+pkgver=5.10.21
+armbianver=21.02.3
+pkgrel=1
+arch=('aarch64' 'x86_64')
+url="http://www.kernel.org/"
+license=('GPL2')
+makedepends=('coreutils' 'binutils')
+options=('!strip')
+source=("https://armbian.hosthatch.com/apt/pool/main/l/linux-${pkgver}-sunxi64/linux-dtb-current-sunxi64_${armbianver}_arm64.deb"
+        "https://armbian.hosthatch.com/apt/pool/main/l/linux-${pkgver}-sunxi64/linux-headers-current-sunxi64_${armbianver}_arm64.deb"
+	"https://armbian.hosthatch.com/apt/pool/main/l/linux-${pkgver}-sunxi64/linux-image-current-sunxi64_${armbianver}_arm64.deb"
+        'linux.preset'
+        '60-linux.hook'
+        '90-linux.hook')
+md5sums=('d09ef5f19ef33489512bb95acfa1c732'
+         'f8229a4111aca846bca47f8941915afa'
+         'effc5f4f3fc6b7f746ba004438aefb9c'
+         'SKIP'
+         'SKIP'
+         'SKIP')
+noextract=("linux-dtb-current-sunxi64_${armbianver}_arm64.deb"
+	   "linux-headers-current-sunxi64_${armbianver}_arm64.deb"
+	   "linux-image-current-sunxi64_${armbianver}_arm64.deb")
+
+prepare() {
+    echo "prepare"
+}
+
+build() {
+    echo "build"
+}
+
+_package() {
+  pkgdesc="The Linux Kernel and modules - ${_desc}"
+  depends=('coreutils' 'linux-firmware' 'kmod' 'mkinitcpio>=0.7')
+  optdepends=('crda: to set the correct wireless channels of your country')
+  provides=("linux=${pkgver}" "WIREGUARD-MODULE")
+  replaces=('linux-armv8')
+  conflicts=('linux' 'linux-aarch64')
+  backup=("etc/mkinitcpio.d/${pkgbase}.preset")
+  install=${pkgname}.install
+
+  for i in "linux-dtb-current-sunxi64_${armbianver}_arm64.deb" "linux-image-current-sunxi64_${armbianver}_arm64.deb"; do
+      ar x "${srcdir}/${i}"
+      bsdtar -xf data.tar.xz -C "$pkgdir/"
+  done
+
+  # Make the resulting package palatable to Arch Linux U-boot.
+  mv "${pkgdir}/boot/vmlinuz-${pkgver}-sunxi64" "${pkgdir}/boot/Image"
+  mv "${pkgdir}/boot/dtb-5.10.21-sunxi64" "${pkgdir}/boot/dtbs"
+
+  # Move stuff to Arch specific places
+  mv "${pkgdir}/lib/modules" "${pkgdir}/usr/lib"
+
+  # Delete Debian specific stuff but licenses.
+  rm -rf "${pkgdir}/etc/kernel/"
+  rm -rf "${pkgdir}/usr/lib/linux-image-current-sunxi64"
+  rmdir "${pkgdir}/lib"
+
+  cd ${_srcname}
+  # sed expression for following substitutions
+  local _subst="
+    s|%PKGBASE%|${pkgbase}|g
+    s|%KERNVER%|${pkgver}-sunxi64|g
+    s|%EXTRAMODULES%|${_extramodules}|g
+  "
+
+  # install mkinitcpio preset file
+  sed "${_subst}" "${srcdir}/linux.preset" |
+    install -Dm644 /dev/stdin "${pkgdir}/etc/mkinitcpio.d/${pkgbase}.preset"
+
+  # install pacman hooks
+  sed "${_subst}" "${srcdir}/60-linux.hook" |
+    install -Dm644 /dev/stdin "${pkgdir}/usr/share/libalpm/hooks/60-${pkgbase}.hook"
+  sed "${_subst}" "${srcdir}/90-linux.hook" |
+    install -Dm644 /dev/stdin "${pkgdir}/usr/share/libalpm/hooks/90-${pkgbase}.hook"
+}
+
+_package-headers() {
+  pkgdesc="Header files and scripts for building modules for linux kernel - ${_desc}"
+  provides=("linux-headers=${pkgver}")
+  conflicts=('linux-headers' 'linux-aarch64-headers')
+
+  for i in "linux-headers-current-sunxi64_${armbianver}_arm64.deb"; do
+      ar x "${srcdir}/${i}"
+      bsdtar -xf data.tar.xz -C "$pkgdir/"
+  done
+
+  # Move stuff to Arch specific places
+  mkdir -p "${pkgdir}/usr/lib/modules/${pkgver}-sunxi64/"
+  mv "${pkgdir}/usr/src/linux-headers-${pkgver}-sunxi64" "${pkgdir}/usr/lib/modules/${pkgver}-sunxi64/build"
+
+  # Delete Debian specific stuff but licenses.
+  rm -rf "${pkgdir}/lib/"
+  rm -rf "${pkgdir}/usr/src/"
+}
+
+pkgname=("${pkgbase}" "${pkgbase}-headers")
+for _p in ${pkgname[@]}; do
+  eval "package_${_p}() {
+    _package${_p#${pkgbase}}
+  }"
+done
