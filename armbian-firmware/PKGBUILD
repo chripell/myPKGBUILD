@@ -1,0 +1,35 @@
+# Repackage armbian-firmware
+
+pkgbase=armbian-firmware
+pkgname=(armbian-firmware)
+pkgver=21.02.4
+pkgrel=1
+pkgdesc="Armbian Firmware files for Linux"
+license=('GPL2' 'GPL3' 'custom')
+arch=('any')
+makedepends=('coreutils')
+options=(!strip)
+source=("https://armbian.hosthatch.com/apt/pool/main/a/armbian-firmware-full/armbian-firmware-full_${pkgver}_all.deb")
+sha256sums=('c949eae6345d5dad3472c35ad83ad1a417c328b68aa0c7327da9d2e0514ffec6')
+noextract=("armbian-firmware_${pkgver}_all.deb")
+conflicts=('linux-firmware')
+provides=('linux-firmware')
+
+prepare() {
+    echo "prepare"
+}
+
+build() {
+    echo "build"
+}
+
+package() {
+  for i in "armbian-firmware-full_${pkgver}_all.deb"; do
+      ar x "${srcdir}/${i}"
+      bsdtar -xf data.tar.xz -C "$pkgdir/"
+  done
+  mkdir -p "${pkgdir}/usr/"
+  mv "${pkgdir}/lib" "${pkgdir}/usr/"
+  echo 'w /sys/devices/system/cpu/microcode/reload - - - - 1' |
+    install -Dm644 /dev/stdin "${pkgdir}/usr/lib/tmpfiles.d/${pkgname}.conf"
+}
