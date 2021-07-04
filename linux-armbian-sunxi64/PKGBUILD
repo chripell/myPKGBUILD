@@ -53,7 +53,7 @@ _package() {
 
   # Make the resulting package palatable to Arch Linux U-boot.
   mv "${pkgdir}/boot/vmlinuz-${pkgver}-sunxi64" "${pkgdir}/boot/Image"
-  mv "${pkgdir}/boot/dtb-5.10.21-sunxi64" "${pkgdir}/boot/dtbs"
+  mv "${pkgdir}/boot/dtb-${pkgver}-sunxi64" "${pkgdir}/boot/dtbs"
 
   # Move stuff to Arch specific places
   mv "${pkgdir}/lib/modules" "${pkgdir}/usr/lib"
