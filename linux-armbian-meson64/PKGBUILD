@@ -1,0 +1,109 @@
+# Repack Armbian meson64 kernel
+
+buildarch=8
+
+pkgbase=linux-armbian-meson64
+_desc="Armbian meson64"
+pkgver=5.10.43
+armbianver=21.05.4
+pkgrel=1
+arch=('any')
+url="http://www.kernel.org/"
+license=('GPL2')
+makedepends=('coreutils' 'binutils')
+options=('!strip')
+source=("https://armbian.hosthatch.com/apt/pool/main/l/linux-${pkgver}-meson64/linux-dtb-current-meson64_${armbianver}_arm64.deb"
+        "https://armbian.hosthatch.com/apt/pool/main/l/linux-${pkgver}-meson64/linux-headers-current-meson64_${armbianver}_arm64.deb"
+	"https://armbian.hosthatch.com/apt/pool/main/l/linux-${pkgver}-meson64/linux-image-current-meson64_${armbianver}_arm64.deb"
+        'linux.preset'
+        '60-linux.hook'
+        '90-linux.hook')
+md5sums=('3ff87f70dc61d032fbac6c188235a924'
+         'b90e71c1a925e5797de860fd96b5a7ab'
+         '7ad272ad6341f97e74feb3faebb89460'
+         '41cb5fef62715ead2dd109dbea8413d6'
+         '0a5f16bfec6ad982a2f6782724cca8ba'
+         '3dc88030a8f2f5a5f97266d99b149f77')
+noextract=("linux-dtb-current-meson64_${armbianver}_arm64.deb"
+	   "linux-headers-current-meson64_${armbianver}_arm64.deb"
+	   "linux-image-current-meson64_${armbianver}_arm64.deb")
+
+prepare() {
+    echo "prepare"
+}
+
+build() {
+    echo "build"
+}
+
+_package() {
+  pkgdesc="The Linux Kernel and modules - ${_desc}"
+  depends=('coreutils' 'linux-firmware' 'kmod' 'mkinitcpio>=0.7')
+  optdepends=('crda: to set the correct wireless channels of your country')
+  provides=("linux=${pkgver}" "WIREGUARD-MODULE")
+  replaces=('linux-armv8')
+  conflicts=('linux' 'linux-aarch64')
+  backup=("etc/mkinitcpio.d/${pkgbase}.preset")
+  install=${pkgname}.install
+
+  for i in "linux-dtb-current-meson64_${armbianver}_arm64.deb" "linux-image-current-meson64_${armbianver}_arm64.deb"; do
+      ar x "${srcdir}/${i}"
+      bsdtar -xf data.tar.xz -C "$pkgdir/"
+  done
+
+  # Make the resulting package palatable to Arch Linux U-boot.
+  mv "${pkgdir}/boot/vmlinuz-${pkgver}-meson64" "${pkgdir}/boot/Image"
+  mv "${pkgdir}/boot/dtb-${pkgver}-meson64" "${pkgdir}/boot/dtbs"
+
+  # Move stuff to Arch specific places
+  mv "${pkgdir}/lib/modules" "${pkgdir}/usr/lib"
+
+  # Delete Debian specific stuff but licenses.
+  rm -rf "${pkgdir}/etc/kernel/"
+  rm -rf "${pkgdir}/usr/lib/linux-image-current-meson64"
+  rmdir "${pkgdir}/lib"
+
+  cd ${_srcname}
+  # sed expression for following substitutions
+  local _subst="
+    s|%PKGBASE%|${pkgbase}|g
+    s|%KERNVER%|${pkgver}-meson64|g
+    s|%EXTRAMODULES%|${_extramodules}|g
+  "
+
+  # install mkinitcpio preset file
+  sed "${_subst}" "${srcdir}/linux.preset" |
+    install -Dm644 /dev/stdin "${pkgdir}/etc/mkinitcpio.d/${pkgbase}.preset"
+
+  # install pacman hooks
+  sed "${_subst}" "${srcdir}/60-linux.hook" |
+    install -Dm644 /dev/stdin "${pkgdir}/usr/share/libalpm/hooks/60-${pkgbase}.hook"
+  sed "${_subst}" "${srcdir}/90-linux.hook" |
+    install -Dm644 /dev/stdin "${pkgdir}/usr/share/libalpm/hooks/90-${pkgbase}.hook"
+}
+
+_package-headers() {
+  pkgdesc="Header files and scripts for building modules for linux kernel - ${_desc}"
+  provides=("linux-headers=${pkgver}")
+  conflicts=('linux-headers' 'linux-aarch64-headers')
+
+  for i in "linux-headers-current-meson64_${armbianver}_arm64.deb"; do
+      ar x "${srcdir}/${i}"
+      bsdtar -xf data.tar.xz -C "$pkgdir/"
+  done
+
+  # Move stuff to Arch specific places
+  mkdir -p "${pkgdir}/usr/lib/modules/${pkgver}-meson64/"
+  mv "${pkgdir}/usr/src/linux-headers-${pkgver}-meson64" "${pkgdir}/usr/lib/modules/${pkgver}-meson64/build"
+
+  # Delete Debian specific stuff but licenses.
+  rm -rf "${pkgdir}/lib/"
+  rm -rf "${pkgdir}/usr/src/"
+}
+
+pkgname=("${pkgbase}" "${pkgbase}-headers")
+for _p in ${pkgname[@]}; do
+  eval "package_${_p}() {
+    _package${_p#${pkgbase}}
+  }"
+done
