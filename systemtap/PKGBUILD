@@ -1,9 +1,10 @@
-# Maintainer: An Nguyen (stk) <an@linux.com>
+# Maintainer: Christian Pellegrin (chripell) <chripell@fsfe.org>
+# Original Maintainer: An Nguyen (stk) <an@linux.com>
 # Original Maintainer: George Angelopoulos <george@usermod.net>
 # Original Maintainer: Christian Rebischke <Chris.Rebischke@archlinux.org>
 # Original Maintainer: dront78 <dront78@gmail.com>
 pkgname=systemtap
-pkgver=4.4
+pkgver=4.5
 pkgrel=1
 pkgdesc="Infrastructure to simplify the gathering of information about the running Linux system"
 url="http://sourceware.org/systemtap/"
@@ -14,28 +15,18 @@ makedepends=('python-setuptools' 'xmlto')
 optdepends=('sqlite3: for storing results in a database')
 source=("${pkgname}-${pkgver}.tar.gz::https://sourceware.org/systemtap/ftp/releases/${pkgname}-${pkgver}.tar.gz"
         "${pkgname}-${pkgver}.tar.gz.asc::https://sourceware.org/systemtap/ftp/releases/${pkgname}-${pkgver}.tar.gz.asc"
-        "0001-Fix-potential-truncation-in-snprintf.patch"
-	"0002-PR27273-port-to-linux-5.11.patch"
-	"0003-PR27273-port-to-linux-5.11-kretprobes.patch"
-	"0004-PR27273-port-to-linux-5.11-kretprobes-unwinding.patch"
-	"0005-PR27361-part-1-enable-typequery-result-memoization-o.patch"
-	"0006-runtime-port-to-5.12-rc-unexporting-of-mutex_lock.patch"
         )
-sha512sums=('8fb1fe5071ec99ce3c6bcf82afdc98a3e1abc0ea937f3019b225c3a1879ada30080740b1918a84c6db06fe1893e6d1e7dc84be26c7e597d7feda1efe11354e76'
-            'SKIP'
-            'SKIP'
-            'SKIP'
-            'SKIP'
-            'SKIP'
-            'SKIP'
-            'SKIP'
-            )
+sha512sums=('8136779a9f5cb0fbaae565eab1ab6fa307f1024dfc2c6c3845acfadff0eecc684ba89aa5d442c7b90c2c73edaab41ca07bae2bad8361f80fe8e9928b40466cd3'
+            'SKIP')
 install='systemtap.install'
+# Note, you need to run:
+# gpg --recv-keys  --keyserver hkps://keys.openpgp.org/ 0xD7C256443CC637CA
+# unless /etc/pacman.d/gnupg/gpg.conf is updated.
 validpgpkeys=('F75E6545B9F8AA15AA932A444DE16D68FDBFFFB8'   # "Serhei Makarov (for Red Hat 2018..onwards) <smakarov@redhat.com>" 
-              '5D38116FA4D3A7CC77E378D37E83610126DCC2E8')
+              '5D38116FA4D3A7CC77E378D37E83610126DCC2E8'
+	      '159B0DF71150B8A8539A8802D7C256443CC637CA')
 build() {
   cd "${pkgname}-${pkgver}"
-  for i in ../000*.patch; do (patch -p1 < $i); done
   ./configure \
     --prefix=/usr \
     --sysconfdir=/etc \
